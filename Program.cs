@@ -21,8 +21,18 @@ namespace DataIngestion_APPS
                 const string query = "SELECT MAX(ProcessedTimestamp) FROM HeartRateData WHERE IsProcessed = 1";
                 try
                 {
-                    using var command = new SqlCommand(query, stagingConnection);
-                    lastProcessedTimestamp = (DateTime?)command.ExecuteScalar();
+                    using (var command = new SqlCommand(query, stagingConnection))
+                    {
+                        var result = command.ExecuteScalar();
+                        if (result != DBNull.Value && result != null)
+                        {
+                            lastProcessedTimestamp = (DateTime?)result;
+                        }
+                        else
+                        {
+                            lastProcessedTimestamp = DateTime.Now;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -39,7 +49,7 @@ namespace DataIngestion_APPS
                 {
                     using var updateCommandIsFaulty = new SqlCommand(updateQueryIsFaulty, stagingConnection);
                     int rowsAffected = updateCommandIsFaulty.ExecuteNonQuery();
-                    Console.WriteLine($"{rowsAffected} records updated.");
+                    Console.WriteLine($"Successfully updated IsFaulty: {rowsAffected} records updated.");
                 }
                 catch (Exception ex)
                 {
@@ -52,7 +62,7 @@ namespace DataIngestion_APPS
                 {
                     using var updateCommandPossibleCondition = new SqlCommand(updateQueryPossibleCondition, stagingConnection);
                     int rowsAffected = updateCommandPossibleCondition.ExecuteNonQuery();
-                    Console.WriteLine($"{rowsAffected} records updated.");
+                    Console.WriteLine($"Succesfully updated PossibleCondition: {rowsAffected} records updated.");
                 }
                 catch (Exception ex)
                 {
@@ -65,7 +75,7 @@ namespace DataIngestion_APPS
                 {
                     using var updateCommandProcessed = new SqlCommand(updateQueryProcessed, stagingConnection);
                     int rowsAffected = updateCommandProcessed.ExecuteNonQuery();
-                    Console.WriteLine($"{rowsAffected} records updated.");
+                    Console.WriteLine($"Succesfully updated ProcessedTimestamp and IsProcessed: {rowsAffected} records updated.");
                 }
                 catch (Exception ex)
                 {
@@ -73,18 +83,23 @@ namespace DataIngestion_APPS
                 }
 
                 //SQL string for selecting the processed data
-                const string selectDataFromStagingDbQuery = "SELECT SensorId, HeartRateBPM, EnterTime, IsFaulty FROM HeartRateData WHERE IsProcessed = 1 AND ProcessedTimestamp > @lastProcessedTimestamp";
+                const string selectDataFromStagingDbQuery = "SELECT SensorId, HeartRateBPM, EnterTime, IsFaulty, PossibleCondition FROM HeartRateData WHERE IsProcessed = 1 AND ProcessedTimestamp > @lastProcessedTimestamp";
 
                 //Insert data into main database
                 using (var selectDataFromStagingDbCommand = new SqlCommand(selectDataFromStagingDbQuery, stagingConnection))
                 {
-                    selectDataFromStagingDbCommand.Parameters.AddWithValue("@lastProcessedTimestamp", lastProcessedTimestamp);
+                    selectDataFromStagingDbCommand.Parameters.Add("@lastProcessedTimestamp", SqlDbType.DateTime).Value = lastProcessedTimestamp;
 
                     using (SqlDataReader reader = selectDataFromStagingDbCommand.ExecuteReader())
                     {   
                         //Datatable gets created for the retrieved data
                         var dataTable = new DataTable();
                         dataTable.Load(reader);
+
+                        foreach (DataColumn column in dataTable.Columns)
+                        {
+                            Console.Write($"Column name: {column.ColumnName}");
+                        }
 
                         using (var mainConnection = new SqlConnection(mainDbConnectionString))
                         {
