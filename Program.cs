@@ -120,6 +120,7 @@ namespace DataIngestion_APPS
                                 try
                                 {
                                     bulkCopy.WriteToServer(dataTable);
+                                    Console.WriteLine("Data successfully written to server");
                                 }
                                 catch (Exception ex)
                                 {
