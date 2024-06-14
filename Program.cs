@@ -50,7 +50,7 @@ namespace DataIngestion_APPS
 
                     //Check for NULL values in the database, set IsFaulty = true when NULL value(s) are found
                     const string updateQueryIsFaulty =
-                        "UPDATE HeartRateData SET IsFaulty = CASE WHEN SensorId IS NULL THEN 1 WHEN HeartRateBPM IS NULL THEN 1 WHEN HeartRateBPM < 50 THEN 1 WHEN HeartRateBPM > 100 THEN 1 WHEN EnterTime IS NULL THEN 1 ELSE 0 END WHERE IsProcessed = 0";
+                        "UPDATE HeartRateData SET IsFaulty = CASE WHEN SensorId IS NULL THEN 1 WHEN HeartRateBPM IS NULL THEN 1 WHEN HeartRateBPM < 50 THEN 1 WHEN HeartRateBPM > 200 THEN 1 WHEN EnterTime IS NULL THEN 1 ELSE 0 END WHERE IsProcessed = 0";
                     try
                     {
                         using var updateCommandIsFaulty = new SqlCommand(updateQueryIsFaulty, stagingConnection);
